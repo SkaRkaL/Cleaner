@@ -66,12 +66,12 @@ main_clean() {
     df -h "$HOME" | awk 'NR==1{print} NR==2{print}' | column -t
 
     # Calculate and show space saved
-    local initial_used=$(df -k "$HOME" | awk 'NR==2{print $3}')
-    local final_used=$(df -k "$HOME" | awk 'NR==2{print $3}')
-    local saved=$((initial_used - final_used))
+    # local initial_used=$(df -k "$HOME" | awk 'NR==2{print $3}')
+    # local final_used=$(df -k "$HOME" | awk 'NR==2{print $3}')
+    # local saved=$((initial_used - final_used))
     
     echo -e "\n🎉 Cleanup Complete!"
-    echo "💾 Space saved: $(format_size $saved)"
+    #echo "💾 Space saved: $(format_size $saved)"
 }
 
 # Run the script
