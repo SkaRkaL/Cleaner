@@ -1,0 +1,49 @@
+name: Release (tag → package → GitHub Release)
+
+on:
+  push:
+    tags:
+      - "v*"          # e.g. v1.0.0, v2.3.1
+
+permissions:
+  contents: write     # needed to create a Release with GITHUB_TOKEN
+
+jobs:
+  package-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Optional: set executable bit if repo doesn't store it
+      - name: Ensure scripts are executable
+        run: |
+          chmod +x ./Cleaner.sh || true
+          chmod +x ./installer.sh || true
+
+      - name: Build distribution
+        run: |
+          mkdir -p dist/cleaner
+          # Include whatever users need to run your tool
+          cp -v Cleaner.sh dist/cleaner/ || true
+          cp -v installer.sh dist/cleaner/ || true
+          cp -v config.sh dist/cleaner/ 2>/dev/null || true
+          cp -v README.md LICENSE dist/cleaner/ 2>/dev/null || true
+
+          pushd dist
+          zip -r cleaner-macos.zip cleaner
+          tar -czf cleaner-macos.tar.gz cleaner
+          shasum -a 256 cleaner-macos.zip > cleaner-macos.zip.sha256
+          shasum -a 256 cleaner-macos.tar.gz > cleaner-macos.tar.gz.sha256
+          popd
+
+      - name: Create GitHub Release & upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/cleaner-macos.zip
+            dist/cleaner-macos.zip.sha256
+            dist/cleaner-macos.tar.gz
+            dist/cleaner-macos.tar.gz.sha256
