@@ -79,3 +79,4 @@ You can customize the cleaning behavior by modifying `config.sh`:
 ## Author
 
 Saif Eddine El Hanoune ([@saifeddineelhanoune](https://github.com/saifeddineelhanoune))
+# trigger CI
