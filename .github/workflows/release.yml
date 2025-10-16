@@ -66,3 +66,12 @@ jobs:
           test -f dist/cleaner-macos.zip.sha256 || { echo "❌ dist/cleaner-macos.zip.sha256 missing"; exit 1; }
           test -f dist/cleaner-macos.tar.gz || { echo "❌ dist/cleaner-macos.tar.gz missing"; exit 1; }
           test -f dist/cleaner-macos.tar.gz.sha256 || { echo "❌ dist/cleaner-macos.tar.gz.sha256 missing"; exit 1; }
+
+      - name: Upload artifacts (even on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleaner-dist
+          path: |
+            dist/**
+            **/*.log

@@ -47,3 +47,12 @@ jobs:
         run: |
           echo "Failing on purpose because commit message contains [fail]"
           exit 1
+
+      - name: Upload artifacts (even on failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cleaner-dist
+          path: |
+            dist/**
+            **/*.log
