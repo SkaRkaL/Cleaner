@@ -2,9 +2,9 @@ name: Bash CI Pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["main", "master"]
 
 jobs:
   test-cleaner:
@@ -15,44 +15,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2️⃣ Validate syntax of all shell scripts
+      # 2️⃣ Force a failure when commit message contains [fail]
+      - name: Force failure on [fail]
+        if: contains(github.event.head_commit.message, '[fail]')
+        run: |
+          echo "❌ Failing intentionally because commit message contains [fail]"
+          exit 1
+
+      # 3️⃣ Validate syntax of all shell scripts
       - name: Check Bash syntax
         run: |
           echo "🔍 Checking syntax for all .sh files..."
           find . -type f -name "*.sh" -exec bash -n {} \;
 
-      # 3️⃣ Run Cleaner.sh safely
+      # 4️⃣ Run Cleaner.sh safely (smoke test)
       - name: Run Cleaner.sh (dry run)
         run: |
           echo "⚙️ Testing Cleaner.sh..."
           chmod +x ./Cleaner.sh
           ./Cleaner.sh --help || true
 
-      # 4️⃣ Show repo structure (optional)
-      - name: List workspace
-        run: ls -la
-
-      # 5️⃣ Verify help text
+      # 5️⃣ Verify help output (this one will fail if missing 'Usage:')
       - name: Verify help text
         run: |
-          set -euo pipefail
-          chmod +x ./Cleaner.sh
+          echo "🧪 Checking help output for 'Usage:' keyword..."
           out="$(./Cleaner.sh --help || true)"
           echo "$out"
-          echo "$out" | grep -q "Usage:" || { echo "❌ Expected 'Usage:' in --help"; exit 1; }
+          echo "$out" | grep -q "Usage:" || { echo "❌ Expected 'Usage:' in help output"; exit 1; }
 
-      # 6️⃣ Example of forcing a failure based on commit message
-      - name: Force failure when commit message contains [fail]
-        if: contains(github.event.head_commit.message, '[fail]')
-        run: |
-          echo "Failing on purpose because commit message contains [fail]"
-          exit 1
-
-      - name: Upload artifacts (even on failure)
+      # 6️⃣ Always upload workspace files (useful for debugging)
+      - name: Upload workspace
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cleaner-dist
-          path: |
-            dist/**
-            **/*.log
+          name: cleaner-workspace
+          path: ./
