@@ -31,6 +31,8 @@ jobs:
       # 4️⃣ Show repo structure (optional)
       - name: List workspace
         run: ls -la
+
+      # 5️⃣ Verify help text
       - name: Verify help text
         run: |
           set -euo pipefail
@@ -39,3 +41,9 @@ jobs:
           echo "$out"
           echo "$out" | grep -q "Usage:" || { echo "❌ Expected 'Usage:' in --help"; exit 1; }
 
+      # 6️⃣ Example of forcing a failure based on commit message
+      - name: Force failure when commit message contains [fail]
+        if: contains(github.event.head_commit.message, '[fail]')
+        run: |
+          echo "Failing on purpose because commit message contains [fail]"
+          exit 1
