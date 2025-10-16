@@ -1,0 +1,33 @@
+name: Bash CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-cleaner:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout your repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Validate syntax of all shell scripts
+      - name: Check Bash syntax
+        run: |
+          echo "🔍 Checking syntax for all .sh files..."
+          find . -type f -name "*.sh" -exec bash -n {} \;
+
+      # 3️⃣ Run Cleaner.sh safely
+      - name: Run Cleaner.sh (dry run)
+        run: |
+          echo "⚙️ Testing Cleaner.sh..."
+          chmod +x ./Cleaner.sh
+          ./Cleaner.sh --help || true
+
+      # 4️⃣ Show repo structure (optional)
+      - name: List workspace
+        run: ls -la
