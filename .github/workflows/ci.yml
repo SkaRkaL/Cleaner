@@ -31,3 +31,11 @@ jobs:
       # 4️⃣ Show repo structure (optional)
       - name: List workspace
         run: ls -la
+      - name: Verify help text
+        run: |
+          set -euo pipefail
+          chmod +x ./Cleaner.sh
+          out="$(./Cleaner.sh --help || true)"
+          echo "$out"
+          echo "$out" | grep -q "Usage:" || { echo "❌ Expected 'Usage:' in --help"; exit 1; }
+
