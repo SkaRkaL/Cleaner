@@ -22,6 +22,10 @@ jobs:
           chmod +x ./Cleaner.sh || true
           chmod +x ./installer.sh || true
 
+      - name: Smoke test
+        run: |
+          ./Cleaner.sh --help || true
+
       - name: Build distribution
         run: |
           mkdir -p dist/cleaner
