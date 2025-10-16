@@ -3,36 +3,37 @@ name: Release (tag → package → GitHub Release)
 on:
   push:
     tags:
-      - "v*"          # e.g. v1.0.0, v2.3.1
+      - "v*"                 # e.g. v1.0.0, v2.3.1, v1.1.0-rc.1, v1.1.0-fail
 
 permissions:
-  contents: write     # needed to create a Release with GITHUB_TOKEN
+  contents: write            # needed to create a Release with the GITHUB_TOKEN
 
 jobs:
   package-and-release:
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Optional: set executable bit if repo doesn't store it
+      # 🔒 Ensure executables (ok if missing)
       - name: Ensure scripts are executable
         run: |
           chmod +x ./Cleaner.sh || true
           chmod +x ./installer.sh || true
 
+      # 🫖 Quick smoke test (won't actually clean)
       - name: Smoke test
         run: |
           ./Cleaner.sh --help || true
 
-      - name: Build distribution
+      # 🏗️ Build distribution artifacts
+      - name: Build dist
         run: |
           mkdir -p dist/cleaner
-          # Include whatever users need to run your tool
           cp -v Cleaner.sh dist/cleaner/ || true
           cp -v installer.sh dist/cleaner/ || true
-          cp -v config.sh dist/cleaner/ 2>/dev/null || true
+          cp -v config.example dist/cleaner/ 2>/dev/null || true
           cp -v README.md LICENSE dist/cleaner/ 2>/dev/null || true
 
           pushd dist
@@ -42,36 +43,38 @@ jobs:
           shasum -a 256 cleaner-macos.tar.gz > cleaner-macos.tar.gz.sha256
           popd
 
-      - name: Create GitHub Release & upload assets
-        uses: softprops/action-gh-release@v2
-        with:
-          prerelease: true
-          generate_release_notes: true
-          files: |
-            dist/cleaner-macos.zip
-            dist/cleaner-macos.zip.sha256
-            dist/cleaner-macos.tar.gz
-            dist/cleaner-macos.tar.gz.sha256
-
-      - name: Upload artifacts (workflow run page)
-        uses: actions/upload-artifact@v4
-        with:
-          name: cleaner-dist
-          path: dist/*
-
-
+      # ✅ Sanity check (demo: will fail clearly if files missing)
       - name: Sanity check dist content
         run: |
           test -f dist/cleaner-macos.zip || { echo "❌ dist/cleaner-macos.zip missing"; exit 1; }
-          test -f dist/cleaner-macos.zip.sha256 || { echo "❌ dist/cleaner-macos.zip.sha256 missing"; exit 1; }
           test -f dist/cleaner-macos.tar.gz || { echo "❌ dist/cleaner-macos.tar.gz missing"; exit 1; }
-          test -f dist/cleaner-macos.tar.gz.sha256 || { echo "❌ dist/cleaner-macos.tar.gz.sha256 missing"; exit 1; }
 
+      # 💥 Controlled failure switch (tag name contains "fail")
+      #     Example: tagging "v1.0.1-fail" will intentionally fail here.
+      - name: Force failure when tag includes "fail"
+        if: contains(github.ref_name, 'fail')
+        run: |
+          echo "Failing on purpose because tag name contains 'fail' → ${{ github.ref_name }}"
+          exit 1
+
+      # 📦 Upload artifacts to the run (handy even if the next step fails)
       - name: Upload artifacts (even on failure)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cleaner-dist
-          path: |
-            dist/**
-            **/*.log
+          path: dist/*
+
+      # 🚀 Create GitHub Release & upload assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success()        # don't publish a release if earlier steps failed
+        with:
+          generate_release_notes: true
+          # Treat tags with a hyphen (rc, beta, etc.) as pre-releases
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            dist/cleaner-macos.zip
+            dist/cleaner-macos.zip.sha256
+            dist/cleaner-macos.tar.gz
+            dist/cleaner-macos.tar.gz.sha256
