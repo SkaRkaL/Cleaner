@@ -59,6 +59,7 @@ jobs:
           name: cleaner-dist
           path: dist/*
 
+
       - name: Sanity check dist content
         run: |
           test -f dist/cleaner-macos.zip || { echo "❌ dist/cleaner-macos.zip missing"; exit 1; }
