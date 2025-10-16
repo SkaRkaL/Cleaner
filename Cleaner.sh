@@ -7,6 +7,7 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$level] $message"
 }
 
+
 # Function to format sizes in human-readable format
 format_size() {
     local size=$1
